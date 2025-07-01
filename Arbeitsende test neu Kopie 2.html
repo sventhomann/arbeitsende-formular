@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Regiebericht Formular</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    input, textarea, select { width: 100%; margin-bottom: 10px; padding: 8px; }
+    #submit_button, #druck_button { padding: 10px 20px; margin-top: 10px; }
+    .readonly input, .readonly textarea { background-color: #f0f0f0; }
+  </style>
+</head>
+<body onload="initForm()">
+  <h2>Regiebericht</h2>
+  <form id="regieForm" method="POST">
+    <div id="handwerker_section">
+      <label for="firma_select">Firma</label>
+      <select id="firma_select" name="firma" onchange="setEmail()">
+        <option value="">-- Firma wählen --</option>
+        <option value="zimmerei_xy">Zimmerei XY</option>
+        <option value="rohbauer_xy">Rohbauer XY</option>
+        <option value="trockenbauer_xy">Trockenbauer XY</option>
+        <option value="gipser_xy">Gipser XY</option>
+        <option value="estrichleger_xy">Estrichleger XY</option>
+        <option value="maler_xy">Maler XY</option>
+        <option value="dachdecker_xy">Dachdecker XY</option>
+        <option value="bodenleger_xy">Bodenleger XY</option>
+        <option value="fliesenleger_xy">Fliesenleger XY</option>
+        <option value="hls_xy">HLS XY</option>
+      </select>
+      <input type="text" id="firma_text" readonly style="display:none;">
+
+      <label for="name">Name</label>
+      <input type="text" id="name" name="name" required>
+
+      <label for="beschreibung">Beschreibung der Arbeit</label>
+      <textarea id="beschreibung" name="beschreibung" rows="4" required></textarea>
+
+      <label for="startzeit">Startzeit</label>
+      <input type="text" id="startzeit" name="startzeit" value="wird automatisch erfasst" readonly>
+
+      <label for="endzeit">Endzeit</label>
+      <input type="text" id="endzeit" name="endzeit" value="wird automatisch erfasst" readonly>
+
+      <label for="dauer">Arbeitsdauer</label>
+      <input type="text" id="dauer" name="arbeitsdauer" value="wird automatisch erfasst" readonly>
+
+      <input type="hidden" id="empfaenger" name="empfaenger">
+    </div>
+
+    <div id="bauherr_section" style="display:none;"></div>
+
+    <button type="submit" id="submit_button">Absenden</button>
+    <button type="button" onclick="drucken()" id="druck_button" style="display:none;">Speichern / Drucken</button>
+  </form>
+
+  <script>
+    function initForm() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const rolle = urlParams.get('rolle');
+
+      const form = document.getElementById('regieForm');
+      const bauherrSection = document.getElementById('bauherr_section');
+      const handwerkerSection = document.getElementById('handwerker_section');
+      const button = document.getElementById('submit_button');
+      const druckButton = document.getElementById('druck_button');
+
+      const startzeit = decodeURIComponent(urlParams.get('startzeit') || '');
+      const endzeit = decodeURIComponent(urlParams.get('endzeit') || '');
+      const dauer = decodeURIComponent(urlParams.get('dauer') || '');
+      const name = decodeURIComponent(urlParams.get('name') || '');
+      const beschreibung = decodeURIComponent(urlParams.get('beschreibung') || '');
+      const firma = decodeURIComponent(urlParams.get('firma') || '');
+
+      if (rolle === 'bauherr') {
+        handwerkerSection.style.display = 'block';
+        bauherrSection.style.display = 'none';
+        button.style.display = 'none';
+        druckButton.style.display = 'inline-block';
+
+        document.getElementById('name').value = name;
+        document.getElementById('beschreibung').value = beschreibung;
+        document.getElementById('startzeit').value = startzeit;
+        document.getElementById('endzeit').value = endzeit;
+        document.getElementById('dauer').value = dauer;
+
+        document.getElementById('firma_select').style.display = 'none';
+        const firmaText = document.getElementById('firma_text');
+        firmaText.style.display = 'block';
+        firmaText.value = firma;
+
+        ['name', 'beschreibung', 'startzeit', 'endzeit', 'dauer'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.setAttribute('readonly', 'readonly');
+        });
+      } else {
+        form.action = "https://htwg.walz40.eu/webhook-test/arbeitsende-senden";
+        handwerkerSection.style.display = 'block';
+        bauherrSection.style.display = 'none';
+        button.style.display = 'inline-block';
+        druckButton.style.display = 'none';
+      }
+    }
+
+    function setEmail() {
+      const mapping = {
+        "zimmerei_xy": "zimmerei@firma.de",
+        "rohbauer_xy": "sventh00@gmail.com",
+        "trockenbauer_xy": "trockenbau@firma.de",
+        "gipser_xy": "gipser@firma.de",
+        "estrichleger_xy": "estrich@firma.de",
+        "maler_xy": "maler@firma.de",
+        "dachdecker_xy": "dachdecker@firma.de",
+        "bodenleger_xy": "bodenleger@firma.de",
+        "fliesenleger_xy": "fliesen@firma.de",
+        "hls_xy": "hls@firma.de"
+      };
+      const firma = document.getElementById('firma_select').value;
+      document.getElementById('empfaenger').value = mapping[firma] || '';
+    }
+
+    function drucken() {
+      window.print();
+    }
+  </script>
+</body>
+</html>
