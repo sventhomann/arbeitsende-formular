@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Regiebericht</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      padding: 2rem;
+    }
+    form {
+      background: white;
+      padding: 2rem;
+      border-radius: 8px;
+      max-width: 700px;
+      margin: auto;
+    }
+    label {
+      font-weight: bold;
+      display: block;
+      margin-top: 1.2rem;
+    }
+    input, textarea, select {
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.4rem;
+      box-sizing: border-box;
+    }
+    input[readonly], textarea.readonly {
+      background-color: #eee;
+    }
+    button {
+      margin-top: 2rem;
+      padding: 1rem;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+    .rot {
+      color: red;
+    }
+  </style>
+  <script>
+    function initForm() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const rolle = urlParams.get('rolle');
+      if (rolle === 'bauherr') {
+        document.getElementById('bauherr_section').style.display = 'block';
+        document.getElementById('handwerker_section').style.display = 'none';
+
+        // Automatisch die Werte aus der URL eintragen:
+        const startzeit = urlParams.get('startzeit');
+        const endzeit = urlParams.get('endzeit');
+        const dauer = urlParams.get('dauer');
+
+        if (startzeit) document.getElementById('startzeit').value = decodeURIComponent(startzeit);
+        if (endzeit) document.getElementById('endzeit').value = decodeURIComponent(endzeit);
+        if (dauer) document.getElementById('dauer').value = decodeURIComponent(dauer);
+      } else {
+        document.getElementById('bauherr_section').style.display = 'none';
+        document.getElementById('handwerker_section').style.display = 'block';
+      }
+    }
+
+    function setEmail() {
+      const mapping = {
+        "zimmerei_xy": "zimmerei@firma.de",
+        "rohbauer_xy": "sventh00@gmail.com",
+        "trockenbauer_xy": "trockenbau@firma.de",
+        "gipser_xy": "gipser@firma.de",
+        "estrichleger_xy": "estrich@firma.de",
+        "maler_xy": "maler@firma.de",
+        "dachdecker_xy": "dachdecker@firma.de",
+        "bodenleger_xy": "bodenleger@firma.de",
+        "fliesenleger_xy": "fliesen@firma.de",
+        "hls_xy": "hls@firma.de"
+      };
+      const firma = document.getElementById('firma').value;
+      document.getElementById('empfaenger').value = mapping[firma] || '';
+    }
+  </script>
+</head>
+<body onload="initForm()">
+
+  <form method="POST" id="regieForm" enctype="multipart/form-data" action="https://htwg.walz40.eu/webhook-test/arbeitsende-senden">
+
+    <div id="handwerker_section">
+      <h2>Regiebericht - Handwerker</h2>
+
+      <label for="firma">Firma:</label>
+      <select name="firma" id="firma" required onchange="setEmail()">
+        <option value="">Bitte wählen</option>
+        <option value="zimmerei_xy">Zimmerei XY</option>
+        <option value="rohbauer_xy">Rohbauer XY</option>
+        <option value="trockenbauer_xy">Trockenbauer XY</option>
+        <option value="gipser_xy">Gipser XY</option>
+        <option value="estrichleger_xy">Estrichleger XY</option>
+        <option value="maler_xy">Maler XY</option>
+        <option value="dachdecker_xy">Dachdecker XY</option>
+        <option value="bodenleger_xy">Bodenleger XY</option>
+        <option value="fliesenleger_xy">Fliesenleger XY</option>
+        <option value="hls_xy">HLS XY</option>
+      </select>
+
+      <input type="hidden" name="empfaenger" id="empfaenger" />
+
+      <label for="name">Name des Mitarbeiters:</label>
+      <input type="text" name="name" id="name" required />
+
+      <label for="beschreibung">Beschreibung der Tätigkeit:</label>
+      <textarea name="beschreibung" id="beschreibung" rows="5" required></textarea>
+
+      <label for="bilder">Bilder hochladen:</label>
+      <input type="file" id="bilder" name="bilder" multiple accept="image/*">
+
+      <label for="startzeit">Startzeit:</label>
+      <input type="text" id="startzeit" name="startzeit" value="Wird automatisch erfasst" readonly>
+
+      <label for="endzeit">Endzeit:</label>
+      <input type="text" id="endzeit" name="endzeit" value="Wird automatisch erfasst" readonly>
+
+      <label for="dauer">Arbeitsdauer:</label>
+      <input type="text" id="dauer" name="dauer" value="Wird automatisch berechnet" readonly>
+    </div>
+
+    <div id="bauherr_section" style="display:none;">
+      <h2>Regiebericht - Bauherr</h2>
+
+      <label for="entscheidung">Entscheidung:</label>
+      <select name="entscheidung" id="entscheidung">
+        <option value="">Bitte wählen</option>
+        <option value="akzeptiert">Akzeptiert</option>
+        <option value="akzeptiert_mit_aenderungen">Akzeptiert mit Änderungen</option>
+        <option value="abgelehnt">Abgelehnt</option>
+      </select>
+
+      <label for="bemerkungen">Bemerkungen <span class="rot">(nur sichtbar bei Änderungen/Ablehnung)</span>:</label>
+      <textarea name="bemerkungen" id="bemerkungen" rows="5"></textarea>
+
+      <label for="dauer_bauherr">Arbeitsdauer (nur bei Änderungen anpassen)</label>
+      <input type="text" id="dauer_bauherr" name="dauer_bauherr" />
+    </div>
+
+    <button type="submit">Absenden</button>
+  </form>
+
+</body>
+</html>
