@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Regiebericht</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      padding: 2rem;
+    }
+    form, .bauherr {
+      background: white;
+      padding: 2rem;
+      border-radius: 8px;
+      max-width: 700px;
+      margin: auto;
+    }
+    label {
+      font-weight: bold;
+      display: block;
+      margin-top: 1.2rem;
+    }
+    input, textarea, select {
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.4rem;
+      box-sizing: border-box;
+    }
+    input[readonly], textarea[readonly] {
+      background-color: #eee;
+    }
+    button {
+      margin-top: 2rem;
+      padding: 1rem;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+  <script>
+    function decodeParam(name) {
+      const value = new URLSearchParams(window.location.search).get(name);
+      return value ? decodeURIComponent(value).replace(/_/g, ' ') : '';
+    }
+
+    function initForm() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const rolle = urlParams.get('rolle');
+
+      if (rolle === 'bauherr') {
+        document.getElementById('handwerkerForm').style.display = 'none';
+        const bhView = document.getElementById('bauherrView');
+        bhView.style.display = 'block';
+
+        // Felder befüllen
+        document.getElementById('view_firma').textContent = decodeParam('firma');
+        document.getElementById('view_name').textContent = decodeParam('name');
+        document.getElementById('view_beschreibung').textContent = decodeParam('beschreibung');
+        document.getElementById('view_startzeit').textContent = decodeParam('startzeit');
+        document.getElementById('view_endzeit').textContent = decodeParam('endzeit');
+        document.getElementById('view_dauer').textContent = decodeParam('dauer');
+      }
+    }
+
+    function submitForm(e) {
+      e.preventDefault();
+
+      const form = document.getElementById('regieForm');
+      const formData = new FormData(form);
+
+      const now = new Date().toLocaleString('de-DE');
+      formData.set('start_time', now);
+      formData.set('end_time', now);
+      formData.set('arbeitsdauer', 'Wird berechnet in n8n');
+
+      fetch("https://htwg.walz40.eu/webhook-test/arbeitsende-senden", {
+        method: "POST",
+        body: formData
+      })
+      .then(res => {
+        if (res.ok) {
+          alert("Erfolgreich gesendet!");
+          form.reset();
+        } else {
+          alert("Fehler beim Senden.");
+        }
+      })
+      .catch(err => {
+        alert("Verbindungsfehler.");
+        console.error(err);
+      });
+    }
+
+    function saveReport() {
+      window.print();
+    }
+
+    window.onload = initForm;
+  </script>
+</head>
+<body>
+
+<!-- Handwerkeransicht -->
+<form id="regieForm" method="POST" enctype="multipart/form-data" onsubmit="submitForm(event)">
+  <div id="handwerkerForm">
+    <h2>Regiebericht – Handwerker</h2>
+
+    <label for="firma">Firma:</label>
+    <select name="firma" id="firma" required>
+      <option value="">Bitte wählen</option>
+      <option value="zimmerei_xy">Zimmerei XY</option>
+      <option value="rohbauer_xy">Rohbauer XY</option>
+      <option value="trockenbauer_xy">Trockenbauer XY</option>
+      <option value="gipser_xy">Gipser XY</option>
+      <option value="estrichleger_xy">Estrichleger XY</option>
+      <option value="maler_xy">Maler XY</option>
+      <option value="dachdecker_xy">Dachdecker XY</option>
+      <option value="bodenleger_xy">Bodenleger XY</option>
+      <option value="fliesenleger_xy">Fliesenleger XY</option>
+      <option value="hls_xy">HLS XY</option>
+    </select>
+
+    <label for="name">Name des Mitarbeiters:</label>
+    <input type="text" name="name" id="name" required />
+
+    <label for="beschreibung">Beschreibung der Tätigkeit:</label>
+    <textarea name="beschreibung" id="beschreibung" rows="5" required></textarea>
+
+    <label for="startzeit">Startzeit:</label>
+    <input type="text" readonly value="Wird automatisch erfasst" />
+
+    <label for="endzeit">Endzeit:</label>
+    <input type="text" readonly value="Wird automatisch erfasst" />
+
+    <label for="dauer">Arbeitsdauer:</label>
+    <input type="text" readonly value="Wird automatisch berechnet" />
+
+    <!-- Unsichtbares Bildfeld -->
+    <input type="file" name="bild" id="bild" style="display:none;" />
+
+    <button type="submit">Absenden</button>
+  </div>
+</form>
+
+<!-- Bauherrensicht -->
+<div id="bauherrView" class="bauherr hidden">
+  <h2>Regiebericht – Bauherr</h2>
+
+  <p><strong>Firma:</strong> <span id="view_firma"></span></p>
+  <p><strong>Name des Mitarbeiters:</strong> <span id="view_name"></span></p>
+  <p><strong>Beschreibung der Tätigkeit:</strong><br><span id="view_beschreibung"></span></p>
+  <p><strong>Startzeit:</strong> <span id="view_startzeit"></span></p>
+  <p><strong>Endzeit:</strong> <span id="view_endzeit"></span></p>
+  <p><strong>Arbeitsdauer:</strong> <span id="view_dauer"></span></p>
+
+  <button onclick="saveReport()">Regiebericht speichern</button>
+</div>
+
+</body>
+</html>
+
