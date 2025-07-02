@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Arbeitsende-Formular</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f7f7f7;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 700px;
+      margin: auto;
+      background-color: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      text-align: center;
+    }
+
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+
+    input[readonly], textarea[readonly], select[disabled] {
+      background-color: #eeeeee !important;
+      color: #222 !important;
+    }
+
+    button {
+      margin-top: 20px;
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h2>Arbeitsende-Formular</h2>
+  <form id="arbeitsformular">
+    <div id="handwerker-teil">
+      <label for="firma">Firma</label>
+      <select name="firma" id="firma" required>
+        <option value="" disabled selected>Firma auswählen</option>
+        <option value="rohbauer_xy">Rohbauer XY</option>
+        <option value="elektro_ab">Elektro AB</option>
+        <option value="maler_meister">Maler Meister</option>
+        <option value="installateur_kg">Installateur KG</option>
+        <option value="zimmerei_zz">Zimmerei ZZ</option>
+      </select>
+
+      <label for="name">Name</label>
+      <input type="text" name="name" id="name" required />
+
+      <label for="beschreibung">Beschreibung der Tätigkeit</label>
+      <textarea name="beschreibung" id="beschreibung" required></textarea>
+
+      <label for="startzeit">Startzeit</label>
+      <input type="text" id="startzeit" name="startzeit" value="Wird automatisch erfasst" readonly />
+
+      <label for="endzeit">Endzeit</label>
+      <input type="text" id="endzeit" name="endzeit" value="Wird automatisch erfasst" readonly />
+
+      <label for="arbeitsdauer">Arbeitsdauer</label>
+      <input type="text" id="arbeitsdauer" name="arbeitsdauer" value="Wird automatisch erfasst" readonly />
+
+      <label for="bilder">Bilder hochladen</label>
+      <div style="background-color: white; height: 50px; margin-bottom: 10px;"></div>
+      <input type="file" id="bilder" name="bilder" multiple class="hidden" />
+
+      <button type="submit">Absenden</button>
+    </div>
+
+    <div id="bauherr-teil" class="hidden">
+      <label for="firma_view">Firma</label>
+      <input type="text" id="firma_view" readonly />
+
+      <label for="name_view">Name</label>
+      <input type="text" id="name_view" readonly />
+
+      <label for="beschreibung_view">Beschreibung</label>
+      <textarea id="beschreibung_view" readonly></textarea>
+
+      <label for="startzeit_view">Startzeit</label>
+      <input type="text" id="startzeit_view" readonly />
+
+      <label for="endzeit_view">Endzeit</label>
+      <input type="text" id="endzeit_view" readonly />
+
+      <label for="arbeitsdauer_view">Arbeitsdauer</label>
+      <input type="text" id="arbeitsdauer_view" readonly />
+
+      <button type="button" onclick="window.print()">Regiebericht speichern</button>
+    </div>
+  </form>
+</div>
+
+<script>
+  function getParam(name) {
+    const url = new URL(window.location.href);
+    return decodeURIComponent(url.searchParams.get(name) || "");
+  }
+
+  function formatFirma(firma) {
+    const map = {
+      rohbauer_xy: "Rohbauer XY",
+      elektro_ab: "Elektro AB",
+      maler_meister: "Maler Meister",
+      installateur_kg: "Installateur KG",
+      zimmerei_zz: "Zimmerei ZZ"
+    };
+    return map[firma] || firma;
+  }
+
+  const rolle = getParam("rolle");
+  if (rolle === "bauherr") {
+    document.getElementById("handwerker-teil").classList.add("hidden");
+    document.getElementById("bauherr-teil").classList.remove("hidden");
+
+    document.getElementById("firma_view").value = formatFirma(getParam("firma"));
+    document.getElementById("name_view").value = getParam("name");
+    document.getElementById("beschreibung_view").value = getParam("beschreibung");
+    document.getElementById("startzeit_view").value = getParam("startzeit");
+    document.getElementById("endzeit_view").value = getParam("endzeit");
+    document.getElementById("arbeitsdauer_view").value = getParam("dauer");
+  } else {
+    document.getElementById("arbeitsformular").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const form = e.target;
+      const formData = new FormData(form);
+
+      formData.set("start_time", new Date().toLocaleString("de-DE"));
+      formData.set("end_time", new Date().toLocaleString("de-DE"));
+      formData.set("arbeitsdauer", "Wird berechnet in n8n");
+
+      fetch("https://htwg.walz40.eu/webhook-test/arbeitsende-senden", {
+        method: "POST",
+        body: formData
+      }).then(res => {
+        if (res.ok) {
+          alert("Formular erfolgreich gesendet!");
+          form.reset();
+        } else {
+          alert("Fehler beim Senden.");
+        }
+      }).catch(err => {
+        alert("Verbindungsfehler: " + err.message);
+      });
+    });
+  }
+</script>
+</body>
+</html>
+
